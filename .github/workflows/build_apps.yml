@@ -95,12 +95,11 @@ jobs:
 
               with open(gradle_path, "w", encoding="utf-8") as f:
                   f.write(g_content)
-              print("Successfully patched build.gradle.")
           '
 
-      - name: Build Android APK
+      - name: Build Android APK with Detailed Gradle Info
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter build apk --release --no-pub
+        run: flutter build apk --release --no-pub --dart-define=CI=true -- --info
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

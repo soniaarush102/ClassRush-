@@ -3,6 +3,7 @@ import 'create_classroom_screen.dart';
 import 'collaborative_whiteboard_screen.dart';
 import 'math_formula_screen.dart';
 import 'video_classroom_screen.dart';
+import 'presentation_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,6 +82,13 @@ class DashboardScreen extends StatelessWidget {
                   },
                   icon: const Icon(Icons.functions, color: Colors.orange),
                   label: const Text('Math Formulas'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const PresentationScreen()));
+                  },
+                  icon: const Icon(Icons.slideshow, color: Colors.orange),
+                  label: const Text('Presentations'),
                 ),
               ],
             ),

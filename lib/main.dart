@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'create_classroom_screen.dart';
+import 'collaborative_whiteboard_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,23 +32,89 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ClassRush Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.orange,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        title: Row(
           children: [
-            const Text(
-              'Welcome to ClassRush',
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text('CR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
+            const SizedBox(width: 12),
+            const Text('ClassRush Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Welcome, Teacher!', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CreateClassroomScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text('Create Class'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CollaborativeWhiteboardScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.dashboard, color: Colors.orange),
+                  label: const Text('Open Whiteboard'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            const Text('Active & Recent Sessions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.add),
-              label: const Text('Create Classroom'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            Expanded(
+              child: ListView(
+                children: [
+                  Card(
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: Colors.orange,
+                        child: Icon(Icons.science, color: Colors.white),
+                      ),
+                      title: const Text('Advanced Mathematics Olympiad (IOQM)'),
+                      subtitle: const Text('Host: Active Session • Capacity: 50'),
+                      trailing: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CollaborativeWhiteboardScreen()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+                        child: const Text('Join Room'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

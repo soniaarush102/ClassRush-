@@ -81,12 +81,12 @@ jobs:
               ndkVersion flutter.ndkVersion
 
               compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_1_7
-                  targetCompatibility JavaVersion.VERSION_1_7
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
               }
 
               kotlinOptions {
-                  jvmTarget = '\''1.7'\''
+                  jvmTarget = '\''1.8'\''
               }
 
               defaultConfig {
@@ -119,9 +119,9 @@ jobs:
           print("Successfully generated production build.gradle with MultiDex.")
           '
 
-      - name: Build Android APK
+      - name: Build Android APK with Stacktrace
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter build apk --release --no-pub
+        run: flutter build apk --release --no-pub --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

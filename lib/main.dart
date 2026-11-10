@@ -1,38 +1,82 @@
+import 'package:flutter/material.dart' hide Element, SelectionOverlay;
+import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
+import 'package:markdraw/markdraw.dart' hide TextAlign;
 
-import 'package:flutter/material.dart';
-import 'app_theme.dart';
-import 'dashboard_screen.dart';
+class ClassRushDashboard extends StatelessWidget {
+  const ClassRushDashboard({Key? key}) : super(key: key);
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ClassRushApp());
-}
-
-class ClassRushApp extends StatefulWidget {
-  const ClassRushApp({super.key});
-
-  @override
-  State<ClassRushApp> createState() => _ClassRushAppState();
-}
-
-class _ClassRushAppState extends State<ClassRushApp> {
-  ThemeMode _themeMode = ThemeMode.light;
-
-  void _setThemeMode(ThemeMode mode) {
-    setState(() => _themeMode = mode);
+  // Function to launch the live video/audio meeting
+  void _joinClassRoom(BuildContext context) async {
+    try {
+      var jitsiMeet = JitsiMeet();
+      var options = JitsiMeetConferenceOptions(
+        room: "ClassRush-Collaborative-Room",
+        serverURL: "https://meet.jit.si",
+        userDisplayName: "Aarush",
+        audioMuted: false,
+        videoMuted: false,
+      );
+      await jitsiMeet.join(options);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to join meeting: $e")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ClassRush',
-      debugShowCheckedModeBanner: false,
-      theme: ClassRushTheme.light,
-      darkTheme: ClassRushTheme.dark,
-      themeMode: _themeMode,
-      home: DashboardScreen(
-        themeMode: _themeMode,
-        onThemeChanged: _setThemeMode,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("ClassRush Collaboration Hub"),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+        actions: [
+          // Quick Video Call Action Button in AppBar
+          IconButton(
+            icon: const Icon(Icons.video_call),
+            tooltip: "Join Live Video Discussion",
+            onPressed: () => _joinClassRoom(context),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Banner / Control Strip
+          Container(
+            padding: const EdgeInsets.all(12.0),
+            color: Colors.indigo.shade50,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Shared Whiteboard Workspace",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.indigo,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _joinClassRoom(context),
+                  icon: const Icon(Icons.mic),
+                  label: const Text("Join Voice/Video"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Interactive Whiteboard Canvas Area
+          Expanded(
+            child: MarkdrawEditor(
+              currentThemeMode: ThemeMode.light,
+              onThemeModeChanged: (mode) {},
+            ),
+          ),
+        ],
       ),
     );
   }

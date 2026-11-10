@@ -47,13 +47,13 @@ jobs:
           rm -rf android
           flutter create . --platforms=android
 
-      - name: Upgrade Gradle Wrapper & Enforce MinSDK 24
+      - name: Upgrade Gradle Wrapper & Configure Android SDK Versions
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
           import os, re
 
-          # 1. Update gradle-wrapper.properties to Gradle 8.4
+          # 1. Upgrade Gradle wrapper to 8.4
           gw_path = "android/gradle/wrapper/gradle-wrapper.properties"
           if os.path.exists(gw_path):
               with open(gw_path, "r", encoding="utf-8") as f:
@@ -67,16 +67,24 @@ jobs:
                   f.write(gw_content)
               print("Upgraded Gradle wrapper to 8.4.")
 
-          # 2. Enforce minSdkVersion 24 in build.gradle
+          # 2. Configure minSdkVersion 24 and compile/targetSdkVersion 34 in build.gradle
           gradle_path = "android/app/build.gradle"
           if os.path.exists(gradle_path):
               with open(gradle_path, "r", encoding="utf-8") as f:
                   g_content = f.read()
+              
               g_content = re.sub(r"minSdkVersion\s+\d+", "minSdkVersion 24", g_content)
               g_content = re.sub(r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24", g_content)
+              
+              g_content = re.sub(r"targetSdkVersion\s+\d+", "targetSdkVersion 34", g_content)
+              g_content = re.sub(r"targetSdkVersion\s+flutter\.targetSdkVersion", "targetSdkVersion 34", g_content)
+              
+              g_content = re.sub(r"compileSdkVersion\s+\d+", "compileSdkVersion 34", g_content)
+              g_content = re.sub(r"compileSdkVersion\s+flutter\.compileSdkVersion", "compileSdkVersion 34", g_content)
+
               with open(gradle_path, "w", encoding="utf-8") as f:
                   f.write(g_content)
-              print("minSdkVersion successfully enforced to 24.")
+              print("Android SDK versions successfully updated.")
           '
 
       - name: Build Android APK

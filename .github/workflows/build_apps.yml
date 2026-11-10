@@ -12,6 +12,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: List Repository Files (Debug)
+        run: ls -la
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -24,14 +27,14 @@ jobs:
           channel: 'stable'
 
       - name: Install Dependencies
-        run: cd ClassRush- && flutter pub get
+        run: flutter pub get
 
       - name: Build Android APK
-        run: cd ClassRush- && flutter build apk --release
+        run: flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: ClassRush-/ClassRush-/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           

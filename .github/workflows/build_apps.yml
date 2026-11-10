@@ -46,16 +46,20 @@ jobs:
         run: |
           MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST_PATH" ]; then
-            # Replace old FlutterApplication reference if present
             sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="android.app.Application"/g' "$MANIFEST_PATH"
-            # Add flutterEmbedding meta-data if missing
             if ! grep -q "flutterEmbedding" "$MANIFEST_PATH"; then
               sed -i '/<application/a \ \ \ \ <meta-data\n\tandroid:name="flutterEmbedding"\n\tandroid:value="2" \/>' "$MANIFEST_PATH"
             fi
-            echo "Android manifest patched successfully for v2 embedding."
-          else
-            echo "AndroidManifest.xml not found at expected path, skipping patch."
+            echo "AndroidManifest patched."
           fi
+
+          # Patch MainActivity to ensure v2 embedding inheritance
+          for MAIN_ACTIVITY in android/app/src/main/kotlin/**/MainActivity.kt android/app/src/main/java/**/MainActivity.java; do
+            if [ -f "$MAIN_ACTIVITY" ]; then
+              sed -i 's/import io.flutter.app.FlutterActivity/import io.flutter.embedding.android.FlutterActivity/g' "$MAIN_ACTIVITY"
+              echo "Patched MainActivity at $MAIN_ACTIVITY"
+            fi
+          done
 
       - name: Build Android APK
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}

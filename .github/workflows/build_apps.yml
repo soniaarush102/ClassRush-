@@ -41,40 +41,10 @@ jobs:
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: flutter pub get
 
-      - name: Global Pub Cache & Workspace v1 Embedding Eradicator
+      - name: Refresh Android Platform to Modern v2 Template
+        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
-          python3 -c '
-          import os, re
-
-          search_dirs = [".", os.path.expanduser("~/.pub-cache")]
-          
-          for s_dir in search_dirs:
-              if not os.path.exists(s_dir):
-                  continue
-              for root, dirs, files in os.walk(s_dir):
-                  if ".git" in root:
-                      continue
-                  for file in files:
-                      if file in ["AndroidManifest.xml", "MainActivity.java", "MainActivity.kt"]:
-                          f_path = os.path.join(root, file)
-                          try:
-                              with open(f_path, "r", encoding="utf-8", errors="ignore") as f:
-                                  content = f.read()
-                              
-                              original = content
-                              content = content.replace("io.flutter.app.FlutterApplication", "android.app.Application")
-                              content = content.replace("io.flutter.app.FlutterActivity", "io.flutter.embedding.android.FlutterActivity")
-                              
-                              if file == "AndroidManifest.xml" and "flutterEmbedding" not in content and "<application" in content:
-                                  content = content.replace("<application", "<application>\n    <meta-data android:name=\"flutterEmbedding\" android:value=\"2\" />")
-
-                              if content != original:
-                                  with open(f_path, "w", encoding="utf-8") as f:
-                                      f.write(content)
-                                  print(f"Patched: {f_path}")
-                          except Exception as e:
-                              pass
-          '
+          flutter create . --platforms=android
 
       - name: Enforce MinSDK 24 in build.gradle
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}

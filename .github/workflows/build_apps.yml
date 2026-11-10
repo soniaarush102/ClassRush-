@@ -44,22 +44,27 @@ jobs:
       - name: Ensure Android v2 Embedding
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
-          MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
-          if [ -f "$MANIFEST_PATH" ]; then
-            sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="android.app.Application"/g' "$MANIFEST_PATH"
-            if ! grep -q "flutterEmbedding" "$MANIFEST_PATH"; then
-              sed -i '/<application/a \ \ \ \ <meta-data\n\tandroid:name="flutterEmbedding"\n\tandroid:value="2" \/>' "$MANIFEST_PATH"
+          echo "Checking Android configuration..."
+          if [ -d "android" ]; then
+            MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+            if [ -f "$MANIFEST_PATH" ]; then
+              echo "Found AndroidManifest.xml, updating embedding..."
+              sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="android.app.Application"/g' "$MANIFEST_PATH"
+              if ! grep -q "flutterEmbedding" "$MANIFEST_PATH"; then
+                sed -i '/<application/a \    <meta-data android:name="flutterEmbedding" android:value="2" />' "$MANIFEST_PATH"
+              fi
+            else
+              echo "Warning: AndroidManifest.xml not found."
             fi
-            echo "AndroidManifest patched."
-          fi
 
-          # Patch MainActivity to ensure v2 embedding inheritance
-          for MAIN_ACTIVITY in android/app/src/main/kotlin/**/MainActivity.kt android/app/src/main/java/**/MainActivity.java; do
-            if [ -f "$MAIN_ACTIVITY" ]; then
-              sed -i 's/import io.flutter.app.FlutterActivity/import io.flutter.embedding.android.FlutterActivity/g' "$MAIN_ACTIVITY"
-              echo "Patched MainActivity at $MAIN_ACTIVITY"
-            fi
-          done
+            # Locate and patch MainActivity
+            find android -name "MainActivity.kt" -o -name "MainActivity.java" | while read -r file; do
+              echo "Patching MainActivity at: $file"
+              sed -i 's/import io.flutter.app.FlutterActivity/import io.flutter.embedding.android.FlutterActivity/g' "$file"
+            done
+          else
+            echo "Android directory not found!"
+          fi
 
       - name: Build Android APK
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}

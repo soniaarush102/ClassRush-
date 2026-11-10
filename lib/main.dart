@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'create_classroom_screen.dart';
 import 'collaborative_whiteboard_screen.dart';
+import 'math_formula_screen.dart';
+import 'video_classroom_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,36 +56,31 @@ class DashboardScreen extends StatelessWidget {
           children: [
             const Text('Welcome, Teacher!', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            Row(
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CreateClassroomScreen()),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateClassroomScreen()));
                   },
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: const Text('Create Class'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
                 ),
-                const SizedBox(width: 16),
                 OutlinedButton.icon(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CollaborativeWhiteboardScreen()),
-                    );
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const CollaborativeWhiteboardScreen()));
                   },
                   icon: const Icon(Icons.dashboard, color: Colors.orange),
-                  label: const Text('Open Whiteboard'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  ),
+                  label: const Text('Whiteboard'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MathFormulaScreen()));
+                  },
+                  icon: const Icon(Icons.functions, color: Colors.orange),
+                  label: const Text('Math Formulas'),
                 ),
               ],
             ),
@@ -97,19 +94,16 @@ class DashboardScreen extends StatelessWidget {
                     child: ListTile(
                       leading: const CircleAvatar(
                         backgroundColor: Colors.orange,
-                        child: Icon(Icons.science, color: Colors.white),
+                        child: Icon(Icons.video_call, color: Colors.white),
                       ),
-                      title: const Text('Advanced Mathematics Olympiad (IOQM)'),
-                      subtitle: const Text('Host: Active Session • Capacity: 50'),
+                      title: const Text('Advanced Mathematics Olympiad Class'),
+                      subtitle: const Text('Live Video & Interactive Whiteboard Active'),
                       trailing: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const CollaborativeWhiteboardScreen()),
-                          );
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const VideoClassroomScreen()));
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-                        child: const Text('Join Room'),
+                        child: const Text('Join Live'),
                       ),
                     ),
                   ),

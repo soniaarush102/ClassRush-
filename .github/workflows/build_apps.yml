@@ -41,30 +41,34 @@ jobs:
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: flutter pub get
 
-      - name: Ensure Android v2 Embedding
+      - name: Ensure Android v2 Embedding & MinSDK
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
-          echo "Checking Android configuration..."
-          if [ -d "android" ]; then
-            MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
-            if [ -f "$MANIFEST_PATH" ]; then
-              echo "Found AndroidManifest.xml, updating embedding..."
-              sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="android.app.Application"/g' "$MANIFEST_PATH"
-              if ! grep -q "flutterEmbedding" "$MANIFEST_PATH"; then
-                sed -i '/<application/a \    <meta-data android:name="flutterEmbedding" android:value="2" />' "$MANIFEST_PATH"
-              fi
-            else
-              echo "Warning: AndroidManifest.xml not found."
+          echo "Patching Android configuration for Jitsi Meet & v2 embedding..."
+          
+          # 1. Update AndroidManifest.xml for v2 embedding
+          MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST_PATH" ]; then
+            sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="android.app.Application"/g' "$MANIFEST_PATH"
+            if ! grep -q "flutterEmbedding" "$MANIFEST_PATH"; then
+              sed -i '/<application/a \    <meta-data android:name="flutterEmbedding" android:value="2" />' "$MANIFEST_PATH"
             fi
-
-            # Locate and patch MainActivity
-            find android -name "MainActivity.kt" -o -name "MainActivity.java" | while read -r file; do
-              echo "Patching MainActivity at: $file"
-              sed -i 's/import io.flutter.app.FlutterActivity/import io.flutter.embedding.android.FlutterActivity/g' "$file"
-            done
-          else
-            echo "Android directory not found!"
+            echo "AndroidManifest patched successfully."
           fi
+
+          # 2. Ensure minSdkVersion is at least 24 (required by Jitsi Meet)
+          GRADLE_PATH="android/app/build.gradle"
+          if [ -f "$GRADLE_PATH" ]; then
+            sed -i 's/minSdkVersion .*/minSdkVersion 24/g' "$GRADLE_PATH"
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' "$GRADLE_PATH"
+            echo "Updated minSdkVersion to 24 in build.gradle."
+          fi
+
+          # 3. Patch MainActivity imports
+          find android -name "MainActivity.kt" -o -name "MainActivity.java" | while read -r file; do
+            sed -i 's/import io.flutter.app.FlutterActivity/import io.flutter.embedding.android.FlutterActivity/g' "$file"
+            echo "Patched MainActivity at $file"
+          done
 
       - name: Build Android APK
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}

@@ -41,15 +41,33 @@ jobs:
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: flutter pub get
 
-      - name: Regenerate Clean Android v2 Scaffolding
+      - name: Clean and Regenerate Fresh Android Scaffolding
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter create . --platforms=android
+        run: |
+          rm -rf android
+          flutter create . --platforms=android
 
-      - name: Enforce MinSDK 24 in build.gradle
+      - name: Upgrade Gradle Wrapper & Enforce MinSDK 24
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
           import os, re
+
+          # 1. Update gradle-wrapper.properties to Gradle 8.4
+          gw_path = "android/gradle/wrapper/gradle-wrapper.properties"
+          if os.path.exists(gw_path):
+              with open(gw_path, "r", encoding="utf-8") as f:
+                  gw_content = f.read()
+              gw_content = re.sub(
+                  r"distributionUrl=.*", 
+                  r"distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip", 
+                  gw_content
+              )
+              with open(gw_path, "w", encoding="utf-8") as f:
+                  f.write(gw_content)
+              print("Upgraded Gradle wrapper to 8.4.")
+
+          # 2. Enforce minSdkVersion 24 in build.gradle
           gradle_path = "android/app/build.gradle"
           if os.path.exists(gradle_path):
               with open(gradle_path, "r", encoding="utf-8") as f:

@@ -49,4 +49,7 @@ jobs:
           name: app-release-apk
           path: ${{ steps.find-project.outputs.project_dir }}/build/app/outputs/flutter-apk/app-release.apk
 
-          
+   <meta-data
+    android:name="flutterEmbedding"
+    android:value="2" />
+    

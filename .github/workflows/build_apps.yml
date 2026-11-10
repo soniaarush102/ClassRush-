@@ -47,7 +47,6 @@ jobs:
           python3 -c '
           import os, re
 
-          # 1. Recursively patch all AndroidManifest.xml files in project & packages
           for root, dirs, files in os.walk("."):
               if ".git" in root or ".dart_tool" in root:
                   continue
@@ -69,11 +68,9 @@ jobs:
                           if changed:
                               with open(m_path, "w", encoding="utf-8") as f:
                                   f.write(content)
-                              print(f"Patched manifest: {m_path}")
                       except Exception as e:
                           pass
 
-          # 2. Patch build.gradle for minSdkVersion 24
           gradle_path = "android/app/build.gradle"
           if os.path.exists(gradle_path):
               with open(gradle_path, "r", encoding="utf-8") as f:
@@ -82,7 +79,6 @@ jobs:
               g_content = re.sub(r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24", g_content)
               with open(gradle_path, "w", encoding="utf-8") as f:
                   f.write(g_content)
-              print("Updated minSdkVersion to 24.")
           '
 
       - name: Build Android APK

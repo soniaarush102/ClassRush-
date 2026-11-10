@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'create_classroom_screen.dart';
 import 'collaborative_whiteboard_screen.dart';
 import 'math_formula_screen.dart';
@@ -6,8 +7,12 @@ import 'video_classroom_screen.dart';
 import 'presentation_screen.dart';
 import 'student_portal_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase backend
+  await Firebase.initializeApp();
+
   runApp(const ClassRushApp());
 }
 

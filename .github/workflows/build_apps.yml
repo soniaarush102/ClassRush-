@@ -17,12 +17,12 @@ jobs:
         run: |
           PUBSPEC_PATH=$(find . -name "pubspec.yaml" -maxdepth 4 | head -n 1)
           if [ -z "$PUBSPEC_PATH" ]; then
-            echo "Error: pubspec.yaml not found anywhere in the repository!"
+            echo "Error: pubspec.yaml not found!"
             exit 1
           fi
           PROJECT_DIR=$(dirname "$PUBSPEC_PATH")
-          echo "project_dir=$PROJECT_DIR" >> $GITHUB_OUTPUT
-          echo "Found Flutter project at: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_OUTPUT
+          echo "Found project at: $PROJECT_DIR"
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -33,23 +33,21 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.16.x'
           channel: 'stable'
+          cache: true
 
       - name: Install Dependencies
-        working-directory: ${{ steps.find-project.outputs.project_dir }}
+        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: flutter pub get
 
       - name: Build Android APK
-        working-directory: ${{ steps.find-project.outputs.project_dir }}
+        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: ${{ steps.find-project.outputs.project_dir }}/build/app/outputs/flutter-apk/app-release.apk
-
-   <meta-data
-    android:name="flutterEmbedding"
-    android:value="2" />
-    
+          name: release-apk
+          path: ${{ steps.find-project.outputs.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
+          

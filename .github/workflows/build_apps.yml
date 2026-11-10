@@ -41,43 +41,48 @@ jobs:
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: flutter pub get
 
-      - name: Ensure Android v2 Embedding & MinSDK (Python Patch)
+      - name: Global Recursive v2 Embedding & MinSDK Patch
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
           import os, re
 
-          # 1. Patch AndroidManifest.xml
-          manifest_path = "android/app/src/main/AndroidManifest.xml"
-          if os.path.exists(manifest_path):
-              with open(manifest_path, "r") as f:
-                  content = f.read()
-              
-              content = content.replace("io.flutter.app.FlutterApplication", "android.app.Application")
-              
-              if "flutterEmbedding" not in content:
-                  content = content.replace("<application", "<application>\n    <meta-data android:name=\"flutterEmbedding\" android:value=\"2\" />")
-              
-              with open(manifest_path, "w") as f:
-                  f.write(content)
-              print("Successfully patched AndroidManifest.xml for v2 embedding.")
-          else:
-              print("Warning: AndroidManifest.xml not found at", manifest_path)
+          # 1. Recursively patch all AndroidManifest.xml files in project & packages
+          for root, dirs, files in os.walk("."):
+              if ".git" in root or ".dart_tool" in root:
+                  continue
+              for file in files:
+                  if file == "AndroidManifest.xml":
+                      m_path = os.path.join(root, file)
+                      try:
+                          with open(m_path, "r", encoding="utf-8") as f:
+                              content = f.read()
+                          
+                          changed = False
+                          if "io.flutter.app.FlutterApplication" in content:
+                              content = content.replace("io.flutter.app.FlutterApplication", "android.app.Application")
+                              changed = True
+                          if "flutterEmbedding" not in content and "<application" in content:
+                              content = content.replace("<application", "<application>\n    <meta-data android:name=\"flutterEmbedding\" android:value=\"2\" />")
+                              changed = True
+                              
+                          if changed:
+                              with open(m_path, "w", encoding="utf-8") as f:
+                                  f.write(content)
+                              print(f"Patched manifest: {m_path}")
+                      except Exception as e:
+                          pass
 
           # 2. Patch build.gradle for minSdkVersion 24
           gradle_path = "android/app/build.gradle"
           if os.path.exists(gradle_path):
-              with open(gradle_path, "r") as f:
+              with open(gradle_path, "r", encoding="utf-8") as f:
                   g_content = f.read()
-              
               g_content = re.sub(r"minSdkVersion\s+\d+", "minSdkVersion 24", g_content)
               g_content = re.sub(r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24", g_content)
-              
-              with open(gradle_path, "w") as f:
+              with open(gradle_path, "w", encoding="utf-8") as f:
                   f.write(g_content)
-              print("Successfully updated minSdkVersion to 24.")
-          else:
-              print("Warning: build.gradle not found at", gradle_path)
+              print("Updated minSdkVersion to 24.")
           '
 
       - name: Build Android APK

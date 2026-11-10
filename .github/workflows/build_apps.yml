@@ -24,16 +24,14 @@ jobs:
           channel: 'stable'
 
       - name: Install Dependencies
-        working-directory: ./ClassRush-
-        run: flutter pub get
+        run: cd ClassRush- && flutter pub get
 
       - name: Build Android APK
-        working-directory: ./ClassRush-
-        run: flutter build apk --release
+        run: cd ClassRush- && flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: ClassRush-/build/app/outputs/flutter-apk/app-release.apk
+          path: ClassRush-/ClassRush-/build/app/outputs/flutter-apk/app-release.apk
           

@@ -1,38 +1,36 @@
-plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
-}
 
-android {
-    namespace "com.example.class_rush"
-    compileSdkVersion flutter.compileSdkVersion
-    ndkVersion flutter.ndkVersion
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+    <uses-permission android:name="android.permission.INTERNET"/>
 
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
+    <application
+        android:label="ClassRush"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
 
-    defaultConfig {
-        applicationId "com.example.class_rush"
-        minSdkVersion flutter.minSdkVersion
-        targetSdkVersion flutter.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
-    }
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.Light.NoTitleBar"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
 
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
-        }
-    }
-}
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@android:style/Theme.Light.NoTitleBar"/>
 
-flutter {
-    source '../..'
-}
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+        </activity>
+
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2"/>
+
+    </application>
+</manifest>

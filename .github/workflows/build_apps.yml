@@ -47,7 +47,7 @@ jobs:
           rm -rf android
           flutter create . --platforms=android
 
-      - name: Upgrade Gradle Wrapper & Configure Android SDK Versions
+      - name: Upgrade Gradle Wrapper & Write Production build.gradle
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
@@ -66,28 +66,62 @@ jobs:
               with open(gw_path, "w", encoding="utf-8") as f:
                   f.write(gw_content)
 
-          # 2. Configure minSdkVersion 24 and compile/targetSdkVersion 34 in build.gradle
+          # 2. Write a complete, valid build.gradle with MultiDex and SDK 34
           gradle_path = "android/app/build.gradle"
-          if os.path.exists(gradle_path):
-              with open(gradle_path, "r", encoding="utf-8") as f:
-                  g_content = f.read()
-              
-              g_content = re.sub(r"minSdkVersion\s+\d+", "minSdkVersion 24", g_content)
-              g_content = re.sub(r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24", g_content)
-              
-              g_content = re.sub(r"targetSdkVersion\s+\d+", "targetSdkVersion 34", g_content)
-              g_content = re.sub(r"targetSdkVersion\s+flutter\.targetSdkVersion", "targetSdkVersion 34", g_content)
-              
-              g_content = re.sub(r"compileSdkVersion\s+\d+", "compileSdkVersion 34", g_content)
-              g_content = re.sub(r"compileSdkVersion\s+flutter\.compileSdkVersion", "compileSdkVersion 34", g_content)
+          gradle_content = """
+          plugins {
+              id \"com.android.application\"
+              id \"kotlin-android\"
+              id \"dev.flutter.flutter-gradle-plugin\"
+          }
 
-              with open(gradle_path, "w", encoding="utf-8") as f:
-                  f.write(g_content)
+          android {
+              namespace \"com.example.classrush\"
+              compileSdk 34
+              ndkVersion flutter.ndkVersion
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_7
+                  targetCompatibility JavaVersion.VERSION_1_7
+              }
+
+              kotlinOptions {
+                  jvmTarget = '\''1.7'\''
+              }
+
+              defaultConfig {
+                  applicationId \"com.example.classrush\"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode flutterVersionCode.toInteger()
+                  versionName flutterVersionName
+                  multiDexEnabled true
+              }
+
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.debug
+                  }
+              }
+          }
+
+          flutter {
+              source \"../..\"
+          }
+
+          dependencies {
+              implementation '\''androidx.multidex:multidex:2.0.1'\''
+          }
+          """
+          
+          with open(gradle_path, "w", encoding="utf-8") as f:
+              f.write(gradle_content)
+          print("Successfully generated production build.gradle with MultiDex.")
           '
 
-      - name: Build Android APK (Verbose)
+      - name: Build Android APK
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter build apk --release --no-pub --verbose
+        run: flutter build apk --release --no-pub
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

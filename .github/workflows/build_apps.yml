@@ -85,9 +85,9 @@ jobs:
                   f.write(g_content)
           '
 
-      - name: Build Android APK (Verbose Info)
+      - name: Build Android APK (Verbose)
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter build apk --release --no-pub --info
+        run: flutter build apk --release --no-pub --verbose
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

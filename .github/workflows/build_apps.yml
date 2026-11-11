@@ -47,7 +47,7 @@ jobs:
           rm -rf android
           flutter create . --platforms=android
 
-      - name: Upgrade Wrapper, Configure SDKs, MultiDex & ProGuard Rules
+      - name: Upgrade Gradle Wrapper & Patch build.gradle for Direct Compilation
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
@@ -66,7 +66,7 @@ jobs:
               with open(gw_path, "w", encoding="utf-8") as f:
                   f.write(gw_content)
 
-          # 2. Patch build.gradle for SDK 34, MinSDK 24, MultiDex, and R8 shrinking (without deprecated useProguard)
+          # 2. Patch build.gradle for SDK 34, MinSDK 24, MultiDex, and debug signing for release
           gradle_path = "android/app/build.gradle"
           if os.path.exists(gradle_path):
               with open(gradle_path, "r", encoding="utf-8") as f:
@@ -89,11 +89,9 @@ jobs:
               if "multiDexEnabled" not in g_content:
                   g_content = re.sub(r"(defaultConfig\s*\{)", r"\1\n        multiDexEnabled true", g_content)
 
-              # Enable R8 shrinking for release builds (compatible with Gradle 8+)
-              g_content = g_content.replace(
-                  "buildTypes {", 
-                  "buildTypes {\n        release {\n            minifyEnabled true\n            proguardFiles getDefaultProguardFile(\"proguard-android-optimize.txt\"), \"proguard-rules.pro\"\n        }"
-              )
+              # Ensure release uses debug signing config so it never fails on missing keystores
+              if "signingConfig signingConfigs.debug" not in g_content:
+                  g_content = re.sub(r"(buildTypes\s*\{[\s\S]*?release\s*\{)", r"\1\n            signingConfig signingConfigs.debug", g_content)
 
               # Add MultiDex dependency
               if "androidx.multidex:multidex" not in g_content:
@@ -101,39 +99,15 @@ jobs:
 
               with open(gradle_path, "w", encoding="utf-8") as f:
                   f.write(g_content)
-
-          # 3. Create ProGuard Rules file to protect Jitsi Meet & WebRTC classes from R8 stripping
-          proguard_path = "android/app/proguard-rules.pro"
-          proguard_rules = """
-          -keep class org.webrtc.** { *; }
-          -keep class org.jitsi.** { *; }
-          -dontwarn org.webrtc.**
-          -dontwarn org.jitsi.**
-          -keepattributes *Annotation*,Signature
-          """
-          with open(proguard_path, "w", encoding="utf-8") as f:
-              f.write(proguard_rules)
-
-          # 4. Update AndroidManifest.xml to register MultiDex Application class
-          manifest_path = "android/app/src/main/AndroidManifest.xml"
-          if os.path.exists(manifest_path):
-              with open(manifest_path, "r", encoding="utf-8") as f:
-                  m_content = f.read()
-              if "android:name=\"androidx.multidex.MultiDexApplication\"" not in m_content:
-                  m_content = m_content.replace("<application", "<application android:name=\"androidx.multidex.MultiDexApplication\"")
-              with open(manifest_path, "w", encoding="utf-8") as f:
-                  f.write(m_content)
-
-          print("Successfully applied updated build configuration.")
           '
 
-      - name: Build Android APK
-        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter build apk --release --no-pub --verbose
+      - name: Build APK Directly via Gradle with Full Stacktrace
+        working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}/android
+        run: ./gradlew assembleRelease --stacktrace --info
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: ${{ steps.find-project.outputs.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
+          path: ${{ steps.find-project.outputs.PROJECT_DIR }}/android/app/build/outputs/apk/release/app-release.apk
           

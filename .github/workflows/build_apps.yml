@@ -47,20 +47,20 @@ jobs:
           rm -rf android
           flutter create . --platforms=android
 
-      - name: Upgrade Gradle Wrapper & Patch build.gradle
+      - name: Upgrade Gradle Wrapper to 9.3.1 & Patch build.gradle
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
           import os, re
 
-          # 1. Upgrade Gradle wrapper to 8.4
+          # 1. Upgrade Gradle wrapper to 9.3.1 as required by the toolchain
           gw_path = "android/gradle/wrapper/gradle-wrapper.properties"
           if os.path.exists(gw_path):
               with open(gw_path, "r", encoding="utf-8") as f:
                   gw_content = f.read()
               gw_content = re.sub(
                   r"distributionUrl=.*", 
-                  r"distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip", 
+                  r"distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-bin.zip", 
                   gw_content
               )
               with open(gw_path, "w", encoding="utf-8") as f:

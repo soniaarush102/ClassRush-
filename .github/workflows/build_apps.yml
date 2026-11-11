@@ -47,7 +47,7 @@ jobs:
           rm -rf android
           flutter create . --platforms=android
 
-      - name: Upgrade Gradle Wrapper & Surgically Patch build.gradle
+      - name: Upgrade Wrapper, Configure SDKs, MultiDex & ProGuard Rules
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
@@ -66,7 +66,7 @@ jobs:
               with open(gw_path, "w", encoding="utf-8") as f:
                   f.write(gw_content)
 
-          # 2. Surgically patch build.gradle
+          # 2. Patch build.gradle for SDK 34, MinSDK 24, MultiDex, and ProGuard release shrinking
           gradle_path = "android/app/build.gradle"
           if os.path.exists(gradle_path):
               with open(gradle_path, "r", encoding="utf-8") as f:
@@ -89,23 +89,47 @@ jobs:
               if "multiDexEnabled" not in g_content:
                   g_content = re.sub(r"(defaultConfig\s*\{)", r"\1\n        multiDexEnabled true", g_content)
 
+              # Enable ProGuard / shrinking rules for release builds
+              g_content = g_content.replace(
+                  "buildTypes {", 
+                  "buildTypes {\n        release {\n            minifyEnabled true\n            useProguard true\n            proguardFiles getDefaultProguardFile(\"proguard-android-optimize.txt\"), \"proguard-rules.pro\"\n        }"
+              )
+
               # Add MultiDex dependency
               if "androidx.multidex:multidex" not in g_content:
                   g_content += "\n\ndependencies {\n    implementation '\''androidx.multidex:multidex:2.0.1'\''\n}\n"
 
               with open(gradle_path, "w", encoding="utf-8") as f:
                   f.write(g_content)
+
+          # 3. Create ProGuard Rules file to protect Jitsi Meet & WebRTC classes from R8 stripping
+          proguard_path = "android/app/proguard-rules.pro"
+          proguard_rules = """
+          -keep class org.webrtc.** { *; }
+          -keep class org.jitsi.** { *; }
+          -dontwarn org.webrtc.**
+          -dontwarn org.jitsi.**
+          -keepattributes *Annotation*,Signature
+          """
+          with open(proguard_path, "w", encoding="utf-8") as f:
+              f.write(proguard_rules)
+
+          # 4. Update AndroidManifest.xml to register MultiDex Application class
+          manifest_path = "android/app/src/main/AndroidManifest.xml"
+          if os.path.exists(manifest_path):
+              with open(manifest_path, "r", encoding="utf-8") as f:
+                  m_content = f.read()
+              if "android:name=\"androidx.multidex.MultiDexApplication\"" not in m_content:
+                  m_content = m_content.replace("<application", "<application android:name=\"androidx.multidex.MultiDexApplication\"")
+              with open(manifest_path, "w", encoding="utf-8") as f:
+                  f.write(m_content)
+
+          print("Successfully applied complete expert build configuration.")
           '
 
-      - name: Build Android APK and Capture Error Output
+      - name: Build Android APK
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: |
-          flutter build apk --release --no-pub > build_output.log 2>&1 || {
-            echo "========== BUILD FAILED. FULL LOG OUTPUT =========="
-            cat build_output.log
-            echo "=================================================="
-            exit 1
-          }
+        run: flutter build apk --release --no-pub --verbose
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

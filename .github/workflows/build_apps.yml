@@ -66,7 +66,7 @@ jobs:
               with open(gw_path, "w", encoding="utf-8") as f:
                   f.write(gw_content)
 
-          # 2. Patch build.gradle for SDK 34, MinSDK 24, MultiDex, and ProGuard release shrinking
+          # 2. Patch build.gradle for SDK 34, MinSDK 24, MultiDex, and R8 shrinking (without deprecated useProguard)
           gradle_path = "android/app/build.gradle"
           if os.path.exists(gradle_path):
               with open(gradle_path, "r", encoding="utf-8") as f:
@@ -89,10 +89,10 @@ jobs:
               if "multiDexEnabled" not in g_content:
                   g_content = re.sub(r"(defaultConfig\s*\{)", r"\1\n        multiDexEnabled true", g_content)
 
-              # Enable ProGuard / shrinking rules for release builds
+              # Enable R8 shrinking for release builds (compatible with Gradle 8+)
               g_content = g_content.replace(
                   "buildTypes {", 
-                  "buildTypes {\n        release {\n            minifyEnabled true\n            useProguard true\n            proguardFiles getDefaultProguardFile(\"proguard-android-optimize.txt\"), \"proguard-rules.pro\"\n        }"
+                  "buildTypes {\n        release {\n            minifyEnabled true\n            proguardFiles getDefaultProguardFile(\"proguard-android-optimize.txt\"), \"proguard-rules.pro\"\n        }"
               )
 
               # Add MultiDex dependency
@@ -124,7 +124,7 @@ jobs:
               with open(manifest_path, "w", encoding="utf-8") as f:
                   f.write(m_content)
 
-          print("Successfully applied complete expert build configuration.")
+          print("Successfully applied updated build configuration.")
           '
 
       - name: Build Android APK

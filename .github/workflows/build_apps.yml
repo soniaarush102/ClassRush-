@@ -46,7 +46,7 @@ jobs:
         run: |
           rm -rf android
           flutter create . --platforms=android
-
+          
       - name: Upgrade Gradle Wrapper to 9.3.1 & Patch build.gradle
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |

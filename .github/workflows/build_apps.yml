@@ -41,30 +41,32 @@ jobs:
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: flutter pub get
 
-      - name: Clean and Regenerate Fresh Android Scaffolding
+      - name: Ensure Android Scaffolding Exists
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
-          rm -rf android
-          flutter create . --platforms=android
-          
-      - name: Upgrade Gradle Wrapper to 9.3.1 & Patch build.gradle
+          if [ ! -d "android" ]; then
+            flutter create . --platforms=android
+          fi
+
+      - name: Configure Gradle 9.3.1 and Patch build.gradle
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
           import os, re
 
-          # 1. Upgrade Gradle wrapper to 9.3.1
-          gw_path = "android/gradle/wrapper/gradle-wrapper.properties"
-          if os.path.exists(gw_path):
-              with open(gw_path, "r", encoding="utf-8") as f:
-                  gw_content = f.read()
-              gw_content = re.sub(
-                  r"distributionUrl=.*", 
-                  r"distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-bin.zip", 
-                  gw_content
-              )
-              with open(gw_path, "w", encoding="utf-8") as f:
-                  f.write(gw_content)
+          # 1. Create and configure gradle-wrapper.properties for Gradle 9.3.1
+          gw_dir = "android/gradle/wrapper"
+          os.makedirs(gw_dir, exist_ok=True)
+          gw_path = os.path.join(gw_dir, "gradle-wrapper.properties")
+          
+          gw_content = """distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\\://services.gradle.org/distributions/gradle-9.3.1-bin.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          """
+          with open(gw_path, "w", encoding="utf-8") as f:
+              f.write(gw_content)
 
           # 2. Patch build.gradle for SDK 34, MinSDK 24, and MultiDex
           gradle_path = "android/app/build.gradle"
@@ -72,7 +74,6 @@ jobs:
               with open(gradle_path, "r", encoding="utf-8") as f:
                   g_content = f.read()
 
-              # Update SDK versions safely
               g_content = re.sub(r"minSdk\s*=\s*\d+", "minSdk = 24", g_content)
               g_content = re.sub(r"minSdkVersion\s+\d+", "minSdkVersion 24", g_content)
               g_content = re.sub(r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24", g_content)
@@ -85,11 +86,9 @@ jobs:
               g_content = re.sub(r"compileSdkVersion\s+\d+", "compileSdkVersion 34", g_content)
               g_content = re.sub(r"compileSdkVersion\s+flutter\.compileSdkVersion", "compileSdkVersion 34", g_content)
 
-              # Enable MultiDex inside defaultConfig
               if "multiDexEnabled" not in g_content:
                   g_content = re.sub(r"(defaultConfig\s*\{)", r"\1\n        multiDexEnabled true", g_content)
 
-              # Add MultiDex dependency
               if "androidx.multidex:multidex" not in g_content:
                   g_content += "\n\ndependencies {\n    implementation '\''androidx.multidex:multidex:2.0.1'\''\n}\n"
 
@@ -97,9 +96,9 @@ jobs:
                   f.write(g_content)
           '
 
-      - name: Build App Bundle with Stacktrace Enabled
+      - name: Build Android App Bundle
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter build appbundle --release --no-pub --verbose --extra-front-end-options=--no-sound-null-safety || flutter build appbundle --release --no-pub --verbose
+        run: flutter build appbundle --release --no-pub
 
       - name: Upload AAB Artifact
         uses: actions/upload-artifact@v4

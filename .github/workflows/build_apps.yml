@@ -47,7 +47,7 @@ jobs:
           rm -rf android
           flutter create . --platforms=android
 
-      - name: Configure Gradle 9.3.1 and Patch build.gradle
+      - name: Configure Gradle 9.3.1, MultiDex, and Disable Minification for Jitsi
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           python3 -c '
@@ -67,7 +67,7 @@ jobs:
           with open(gw_path, "w", encoding="utf-8") as f:
               f.write(gw_content)
 
-          # 2. Patch build.gradle for SDK 34, MinSDK 24, and MultiDex
+          # 2. Patch build.gradle for SDK 34, MinSDK 24, MultiDex, and disable minification
           gradle_path = "android/app/build.gradle"
           if os.path.exists(gradle_path):
               with open(gradle_path, "r", encoding="utf-8") as f:
@@ -87,6 +87,12 @@ jobs:
 
               if "multiDexEnabled" not in g_content:
                   g_content = re.sub(r"(defaultConfig\s*\{)", r"\1\n        multiDexEnabled true", g_content)
+
+              # Disable minification/shrinking in buildTypes release so Jitsi classes are preserved
+              if "minifyEnabled" in g_content:
+                  g_content = re.sub(r"minifyEnabled\s+true", "minifyEnabled false", g_content)
+              else:
+                  g_content = re.sub(r"(buildTypes\s*\{[^}]*release\s*\{)", r"\1\n            minifyEnabled false\n            shrinkResources false", g_content)
 
               if "androidx.multidex:multidex" not in g_content:
                   g_content += "\n\ndependencies {\n    implementation '\''androidx.multidex:multidex:2.0.1'\''\n}\n"

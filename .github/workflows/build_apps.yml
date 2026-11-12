@@ -53,7 +53,7 @@ jobs:
           python3 -c '
           import os, re
 
-          # 1. Upgrade Gradle wrapper to 9.3.1 as required by the toolchain
+          # 1. Upgrade Gradle wrapper to 9.3.1
           gw_path = "android/gradle/wrapper/gradle-wrapper.properties"
           if os.path.exists(gw_path):
               with open(gw_path, "r", encoding="utf-8") as f:
@@ -97,9 +97,16 @@ jobs:
                   f.write(g_content)
           '
 
-      - name: Build Android APK via Flutter CLI
+      - name: Build Android APK with Error Tail Capture
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter build apk --release --no-pub
+        run: |
+          set -o pipefail
+          flutter build apk --release --no-pub --verbose 2>&1 | tee build_log.txt || {
+            echo "================ BUILD FAILED. ERROR LOG TAIL ================"
+            tail -n 120 build_log.txt
+            echo "=============================================================="
+            exit 1
+          }
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

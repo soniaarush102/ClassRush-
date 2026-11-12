@@ -97,14 +97,14 @@ jobs:
                   f.write(g_content)
           '
 
-      - name: Build Android APK with Error Tail Capture
+      - name: Build Android APK with Targeted Error Extraction
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
         run: |
           set -o pipefail
-          flutter build apk --release --no-pub --verbose 2>&1 | tee build_log.txt || {
-            echo "================ BUILD FAILED. ERROR LOG TAIL ================"
-            tail -n 120 build_log.txt
-            echo "=============================================================="
+          flutter build apk --release --no-pub --verbose > build_log.txt 2>&1 || {
+            echo "================ EXTRACTED ERROR SUMMARY ================"
+            grep -iE "error|exception|failed" build_log.txt | tail -n 40
+            echo "========================================================="
             exit 1
           }
 

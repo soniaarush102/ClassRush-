@@ -97,9 +97,9 @@ jobs:
                   f.write(g_content)
           '
 
-      - name: Build Android App Bundle (AAB) to Bypass Sub-Process Failure
+      - name: Build App Bundle with Stacktrace Enabled
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: flutter build appbundle --release --no-pub
+        run: flutter build appbundle --release --no-pub --verbose --extra-front-end-options=--no-sound-null-safety || flutter build appbundle --release --no-pub --verbose
 
       - name: Upload AAB Artifact
         uses: actions/upload-artifact@v4

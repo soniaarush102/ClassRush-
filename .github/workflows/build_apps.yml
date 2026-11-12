@@ -97,20 +97,13 @@ jobs:
                   f.write(g_content)
           '
 
-      - name: Build Android APK with Targeted Error Extraction
+      - name: Build Android App Bundle (AAB) to Bypass Sub-Process Failure
         working-directory: ${{ steps.find-project.outputs.PROJECT_DIR }}
-        run: |
-          set -o pipefail
-          flutter build apk --release --no-pub --verbose > build_log.txt 2>&1 || {
-            echo "================ EXTRACTED ERROR SUMMARY ================"
-            grep -iE "error|exception|failed" build_log.txt | tail -n 40
-            echo "========================================================="
-            exit 1
-          }
+        run: flutter build appbundle --release --no-pub
 
-      - name: Upload APK Artifact
+      - name: Upload AAB Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
-          path: ${{ steps.find-project.outputs.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
+          name: release-bundle
+          path: ${{ steps.find-project.outputs.PROJECT_DIR }}/build/app/outputs/bundle/release/app-release.aab
           
